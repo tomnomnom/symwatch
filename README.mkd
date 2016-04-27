@@ -1,0 +1,17 @@
+# symwatch
+
+Watches a symlink and runs a command when the target of the symlink changes.
+
+## Usage
+
+```
+Usage:
+  symwatch <symlink> <command> [-sleep <millis>]
+
+Options:
+  -sleep <millis>: The time (in milliseconds) to sleep between checking the symlink target (default 500)
+
+Example:
+  symwatch /var/www/current 'service apache2 graceful' -sleep 1000
+```
+
