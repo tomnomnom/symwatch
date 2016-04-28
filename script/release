@@ -1,0 +1,36 @@
+#!/bin/bash
+set -e
+PROJDIR=$(cd `dirname $0`/.. && pwd)
+
+TAG=${1}
+USER="tomnomnom"
+REPO="symwatch"
+
+if [ -z "${TAG}" ]; then
+    echo "Usage: ${0} <tag>"
+    exit 1
+fi
+
+if [ -z "${GITHUB_TOKEN}" ]; then
+    echo "No GITHUB_TOKEN set"
+    exit 2
+fi
+
+cd ${PROJDIR}
+go build github.com/tomnomnom/symwatch
+tar cvzf symwatch.tgz symwatch
+
+github-release release \
+    --user ${USER} \
+    --repo ${REPO} \
+    --tag ${TAG} \
+    --name "symwatch ${TAG}" \
+    --description "${TAG}" \
+    --pre-release
+
+github-release upload \
+    --user ${USER} \
+    --repo ${REPO} \
+    --tag ${TAG} \
+    --name "linux-amd64-symwatch.tgz" \
+    --file ${PROJDIR}/symwatch.tgz
