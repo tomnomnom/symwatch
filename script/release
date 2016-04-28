@@ -32,5 +32,5 @@ github-release upload \
     --user ${USER} \
     --repo ${REPO} \
     --tag ${TAG} \
-    --name "linux-amd64-symwatch.tgz" \
+    --name "symwatch-linux-amd64.tgz" \
     --file ${PROJDIR}/symwatch.tgz
