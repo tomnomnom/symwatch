@@ -2,6 +2,8 @@
 
 Watches a symlink and runs a command when the target of the symlink changes.
 
+[![Build Status](https://travis-ci.org/tomnomnom/symwatch.svg?branch=master)](https://travis-ci.org/tomnomnom/symwatch)
+
 ## Usage
 
 ```
