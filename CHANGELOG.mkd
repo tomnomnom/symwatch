@@ -2,5 +2,9 @@
 
 ## 0.0.1
 ### Added
+- Release script
+
+## 0.0.1
+### Added
 - Ability to watch symlink
 - Ability to run command
