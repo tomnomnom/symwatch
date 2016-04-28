@@ -5,13 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
-func TestGetTargetSimple(t *testing.T) {
-	tmpdir, cleanup := makeTestDir(t)
-	defer cleanup()
-
-	symlink, cleanup := makeSymlink(t, tmpdir)
+func TestGetTargetAbsolute(t *testing.T) {
+	_, symlink, cleanup := makeDirAndSymlink(t)
 	defer cleanup()
 
 	target, err := getTarget(symlink)
@@ -23,26 +21,29 @@ func TestGetTargetSimple(t *testing.T) {
 	}
 }
 
-// It's possible to be given a symlink with a relative target. We need to make sure
-// we get the absolute path to that target.
 func TestGetTargetRelative(t *testing.T) {
-	tmpdir, cleanup := makeTestDir(t)
+	tmpdir, symlink, cleanup := makeDirAndSymlink(t)
 	defer cleanup()
 
-	rootDir := filepath.Dir(tmpdir)
+	// Get the current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Errorf("Failed to get current working directory: %s", err)
 	}
 
-	err = os.Chdir(rootDir)
+	// Switch to the directory containing the tmpdir
+	err = os.Chdir(filepath.Dir(tmpdir))
 	if err != nil {
 		t.Errorf("Failed to change directory: %s", err)
 	}
 
-	// Make a symlink to the relative path
-	symlink, cleanup := makeSymlink(t, filepath.Base(tmpdir))
-	defer cleanup()
+	target, err := getTarget(filepath.Base(symlink))
+	if err != nil {
+		t.Errorf("Error from getTarget should be nil but was: %s", err)
+	}
+	if !filepath.IsAbs(target) {
+		t.Errorf("Target returned by getTarget should be absolute but was [%s]", target)
+	}
 
 	// Switch back to the original working directory
 	err = os.Chdir(cwd)
@@ -50,13 +51,6 @@ func TestGetTargetRelative(t *testing.T) {
 		t.Errorf("Failed to get current working directory: %s", err)
 	}
 
-	target, err := getTarget(filepath.Join(rootDir, symlink))
-	if err != nil {
-		t.Errorf("Error from getTarget should be nil but was: %s", err)
-	}
-	if !filepath.IsAbs(target) {
-		t.Errorf("Target returned by getTarget should be absolute but was [%s]", target)
-	}
 }
 
 func TestGetTargetNoFile(t *testing.T) {
@@ -77,7 +71,7 @@ func TestGetTargetNotSymlink(t *testing.T) {
 }
 
 func TestIsSymlink(t *testing.T) {
-	symlink, cleanup := makeSymlink(t, "footlemcbootle")
+	symlink, cleanup := makeSymlink(t, "thepathdoesnotmatter")
 	defer cleanup()
 
 	if !isSymlink(symlink) {
@@ -92,6 +86,21 @@ func TestIsSymlink(t *testing.T) {
 	}
 }
 
+func TestWaitForChange(t *testing.T) {
+	tmpdir, symlink, cleanup := makeDirAndSymlink(t)
+	defer cleanup()
+
+	target, err := waitForChange(symlink, "", time.Duration(0))
+	if err != nil {
+		t.Errorf("Was expecting nil error value from waitForChange but got [%s]", err)
+	}
+
+	if target != tmpdir {
+		t.Errorf("Returned symlink target should have been [%s] but was [%s]", tmpdir, target)
+	}
+
+}
+
 type cleanup func()
 
 func makeTestDir(t *testing.T) (string, cleanup) {
@@ -100,7 +109,7 @@ func makeTestDir(t *testing.T) (string, cleanup) {
 		t.Errorf("Failed to create tmpdir: %s", err)
 	}
 	return tmpdir, func() {
-		os.RemoveAll(tmpdir)
+		_ = os.RemoveAll(tmpdir)
 	}
 }
 
@@ -111,6 +120,17 @@ func makeSymlink(t *testing.T, path string) (string, cleanup) {
 		t.Errorf("Failed to create symlink: %s", err)
 	}
 	return symlink, func() {
-		os.Remove(symlink)
+		_ = os.Remove(symlink)
 	}
+}
+
+func makeDirAndSymlink(t *testing.T) (string, string, cleanup) {
+	tmpdir, tmpclean := makeTestDir(t)
+	symlink, symclean := makeSymlink(t, tmpdir)
+
+	return tmpdir, symlink, func() {
+		tmpclean()
+		symclean()
+	}
+
 }

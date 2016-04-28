@@ -6,12 +6,33 @@ Watches a symlink and runs a command when the target of the symlink changes.
 
 ```
 Usage:
-  symwatch <symlink> <command> [-sleep <millis>]
+  symwatch <symlink> <command> [<pollInterval>]
 
 Options:
-  -sleep <millis>: The time (in milliseconds) to sleep between checking the symlink target (default 500)
+  symlink	An absolute or relative path to a symlink
+  command	The command to run when the symlink target changes
+  pollInterval	The number of milliseconds to wait between polling the symlink (default 500)
+
+Notes:
+  * If the symlink is unreadable for more than 5 attempts the process will exit
+  * Commands are passed to `sh -c`
+
+Exit Codes:
+  0	OK
+  1	Invalid Arguments
+  2	Invalid Symlink
+  3	Symlink Went Away
 
 Example:
-  symwatch /var/www/current 'service apache2 graceful' -sleep 1000
+  symwatch /var/www/current 'service apache2 graceful' 500
 ```
 
+## Motivation
+
+It's a fairly common pattern to use a symlink to point to the current version of
+a codebase. Sometimes it's neccesary to restart processes or clear caches when the version
+of a codebase changes.
+
+## Why not use inotify?
+
+It's not portable. In particular it does not work if the symlink being polled is on an NFS share.
