@@ -1,0 +1,6 @@
+# Changelog
+
+## [Unreleased]
+### Added
+- Ability to watch symlink
+- Ability to run command
